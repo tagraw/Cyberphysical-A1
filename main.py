@@ -14,22 +14,58 @@ logging.basicConfig(level=logging.ERROR)
 # TODO URI to the Crazyflie — change after we get a drone
 URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 
+DEFAULT_HEIGHT = 0.5
 
-def main():
-    print("Commands: i, s, u x, d x, f x, b x, l x, r x, n")
 
+def log_stab_callback(timestamp, data, logconf):
+    print(
+        f"[{timestamp}] "
+        f"Roll={data['stabilizer.roll']:.3f}, "
+        f"Pitch={data['stabilizer.pitch']:.3f}, "
+        f"Yaw={data['stabilizer.yaw']:.3f}"
+    )
+
+def take_off_simple(scf):
+    with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
+        time.sleep(4)
+
+def handle_commands(cmd, scf, lg_stab):
+    parts = cmd.strip().split()
+    if not parts:
+        return True
+
+    c = parts[0]
+
+    # q1
+    if c == 'i':
+        cf.log.add_config(lg_stab)
+        lg_stab.data_received_cb.add_callback(log_stab_callback)
+        lg_stab.start()
+        time.sleep(2)
+        lg_stab.stop()
+        return True
+
+    #q2
+    if c == 's':
+        take_off_simple(scf)
+        return True
+
+    return True
+
+
+if __name__ == "__main__":
     cflib.crtp.init_drivers()
 
-    # Create Crazyflie object
-    cf = Crazyflie(rw_cache='./cache')
-    
     lg_stab = LogConfig(name='Stabilizer', period_in_ms=100)
     lg_stab.add_variable('stabilizer.roll', 'float')
     lg_stab.add_variable('stabilizer.pitch', 'float')
     lg_stab.add_variable('stabilizer.yaw', 'float')
 
-    with SyncCrazyflie(URI, cf=cf) as scf:
+    with SyncCrazyflie(URI, cf=Crazyflie(rw_cache='./cache')) as scf:
 
+        while True:
+            cmd = input("> ")
+            cont = handle_commands(cmd, scf, lg_stab)
+            if cont is False:
+                break
 
-if __name__ == "__main__":
-    main()
