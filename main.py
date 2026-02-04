@@ -50,6 +50,12 @@ def handle_commands(cmd, scf, lg_stab):
         take_off_simple(scf)
         return True
 
+    #q3
+    if c == 'u':
+        with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
+            mc.up(float(parts[1]))
+        return True
+
     return True
 
 
