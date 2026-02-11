@@ -1,41 +1,3 @@
-Conversation opened. 1 unread message.
-
-Skip to content
-Using UTmail Mail with screen readers
-Enable desktop notifications for UTmail Mail.
-   OK  No thanks
-
-1 of 3,205
-Test Script
-Inbox
-
-Shashank Iswara
-Attachments
-4:53 PM (40 minutes ago)
-to me
-
-
- One attachment
-  •  Scanned by Gmail
-
-To
-
-
----------- Forwarded message ---------
-From: Shashank Iswara <shashankiswara@utexas.edu>
-Date: Wed, Feb 11, 2026 at 4:53 PM
-Subject: Test Script
-To: <tanviagrawal@utexas.edu>
-
-
-
-
-
---
-Tanvi Agrawal | Computer Science
-The University of Texas at Austin  
-tanviagrawal@utexas.edu | LinkedIn
-test.py (1K)
 import time
 import logging
 
@@ -74,5 +36,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-test.py
-Displaying test.py. 
