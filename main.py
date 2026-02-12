@@ -5,14 +5,12 @@ import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.crazyflie.log import LogConfig
-from cflib.positioning.motion_commander import MotionCommander
-from cflib.utils import uri_helper
+from cflib.crazyflie.high_level_commander import HighLevelCommander
 
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.ERROR)
 
-# TODO URI to the Crazyflie — change after we get a drone
-URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
+URI = "radio://0/80/2M/E7E7E7E701"
 
 DEFAULT_HEIGHT = 0.5
 
@@ -26,8 +24,12 @@ def log_stab_callback(timestamp, data, logconf):
     )
 
 def take_off_simple(scf):
-    with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
-        time.sleep(4)
+    hlc = HighLevelCommander(scf.cf)
+    hlc.takeoff(DEFAULT_HEIGHT, 2.0)
+    time.sleep(2.5)
+    hlc.land(0.0, 2.0)
+    time.sleep(2.5)
+    hlc.stop()
 
 def handle_commands(cmd, scf, lg_stab, state):
     parts = cmd.strip().split()
@@ -47,47 +49,64 @@ def handle_commands(cmd, scf, lg_stab, state):
 
     #q2
     if c == 's':
-        if state["mc"] is None:
-            state["mc"] = MotionCommander(scf, default_height=DEFAULT_HEIGHT)
+        if state["hlc"] is None:
+            state["hlc"] = HighLevelCommander(scf.cf)
+            state["hlc"].takeoff(DEFAULT_HEIGHT, 2.0)
+            time.sleep(2.5)
+            state["pos"] = {"x": 0.0, "y": 0.0, "z": DEFAULT_HEIGHT, "yaw": 0.0}
         return True
 
-    if state["mc"] is None:
+    if state["hlc"] is None:
         print("must do s first")
-        return True 
-        
-    mc = state["mc"]
+        return True
 
+    hlc = state["hlc"]
+    pos = state["pos"]
 
     #q3
     if c == 'u':
-        mc.up(float(parts[1]))
+        pos["z"] += float(parts[1])
+        hlc.go_to(pos["x"], pos["y"], pos["z"], pos["yaw"], 1.0)
+        time.sleep(1.5)
         return True
 
     #q4
     if c == 'd':
-        mc.down(float(parts[1]))
+        pos["z"] -= float(parts[1])
+        hlc.go_to(pos["x"], pos["y"], pos["z"], pos["yaw"], 1.0)
+        time.sleep(1.5)
         return True
     #q5
     if c == 'f':
-        mc.forward(float(parts[1]))
+        pos["x"] += float(parts[1])
+        hlc.go_to(pos["x"], pos["y"], pos["z"], pos["yaw"], 1.0)
+        time.sleep(1.5)
         return True
     #q6
     if c == 'b':
-        mc.back(float(parts[1]))
+        pos["x"] -= float(parts[1])
+        hlc.go_to(pos["x"], pos["y"], pos["z"], pos["yaw"], 1.0)
+        time.sleep(1.5)
         return True
     #q7
     if c == 'l':
-        mc.turn_left(float(parts[1]))
+        pos["yaw"] += float(parts[1])
+        hlc.go_to(pos["x"], pos["y"], pos["z"], pos["yaw"], 1.0)
+        time.sleep(1.5)
         return True
     #q8
     if c == 'r':
-        mc.turn_right(float(parts[1]))
+        pos["yaw"] -= float(parts[1])
+        hlc.go_to(pos["x"], pos["y"], pos["z"], pos["yaw"], 1.0)
+        time.sleep(1.5)
         return True
     #q9
     if c == 'n':
-        mc.land()
-        mc.stop()
-        state["mc"] = None
+        hlc.land(0.0, 2.0)
+        time.sleep(2.5)
+        hlc.stop()
+        state["hlc"] = None
+        state["pos"] = None
         return True
 
     return True
@@ -101,7 +120,7 @@ if __name__ == "__main__":
     lg_stab.add_variable('stabilizer.pitch', 'float')
     lg_stab.add_variable('stabilizer.yaw', 'float')
 
-    state = {"mc": None}
+    state = {"hlc": None, "pos": None}
 
 
     with SyncCrazyflie(URI, cf=Crazyflie(rw_cache='./cache')) as scf:

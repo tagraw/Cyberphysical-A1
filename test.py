@@ -1,5 +1,5 @@
-import time
 import logging
+import time
 
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
